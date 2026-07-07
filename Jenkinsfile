@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "faris7/python-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        GITOPS_REPO = "https://github.com/Farisvtp/python-gitops.git"
+        GITOPS_REPO = "https://github.com/Farisvtp/python-app-gitops.git"
     }
 
     stages {
