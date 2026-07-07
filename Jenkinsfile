@@ -43,25 +43,32 @@ pipeline {
         }
 
         stage('Update GitOps Repository') {
-            steps {
-                dir('python-app-gitops') {
+    steps {
+        dir('python-app-gitops') {
 
-                    git branch: 'main',
-                        credentialsId: 'github-credentials',
-                        url: "${GITOPS_REPO}"
+            git branch: 'main',
+                credentialsId: 'github-credentials',
+                url: "${GITOPS_REPO}"
 
-                    sh """
-                        sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|g' deployment.yaml
+            withCredentials([usernamePassword(
+                credentialsId: 'github-credentials',
+                usernameVariable: 'GIT_USERNAME',
+                passwordVariable: 'GIT_TOKEN'
+            )]) {
 
-                        git config user.name "Jenkins"
-                        git config user.email "jenkins@local"
+                sh """
+                    sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|g' deployment.yaml
 
-                        git add deployment.yaml
+                    git config user.name "Jenkins"
+                    git config user.email "jenkins@local"
 
-                        git commit -m "Update image to ${IMAGE_TAG}" || true
+                    git add deployment.yaml
+                    git commit -m "Update image to ${IMAGE_TAG}" || true
 
-                        git push origin main
-                    """
+                    git remote set-url origin https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/Farisvtp/python-app-gitops.git
+
+                    git push origin main
+                """
                 }
             }
         }
