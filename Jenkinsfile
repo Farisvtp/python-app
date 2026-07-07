@@ -10,17 +10,19 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/Farisvtp/python-app.git'
+                git branch: 'main',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/Farisvtp/python-app.git'
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
 
-        stage('Push Image') {
+        stage('Docker Login & Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -29,12 +31,21 @@ pipeline {
                 )]) {
 
                     sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $IMAGE_NAME:$IMAGE_TAG
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker logout
                     '''
                 }
             }
         }
+    }
 
+    post {
+        success {
+            echo "Image pushed successfully: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline failed."
+        }
     }
 }
